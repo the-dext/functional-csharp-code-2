@@ -1,4 +1,7 @@
-﻿namespace Exercises.Chapter3
+﻿using System;
+using NUnit.Framework;
+
+namespace Exercises.Chapter3
 {
    // 1. Write a console app that calculates a user's Body-Mass Index:
    //   - prompt the user for her height in metres and weight in kg
@@ -10,5 +13,56 @@
 
    public static class Bmi
    {
+      private static Func<int> GetHeight = () =>
+      {
+         Console.WriteLine("Enter height in metres");
+         return int.Parse(Console.ReadLine() ?? "0");
+      };
+
+      private static Func<int> GetWeight = () =>
+      {
+         Console.WriteLine("Enter weight in kg");
+         return int.Parse(Console.ReadLine() ?? "0");
+      };
+
+      private static Func<double> CalcBmi(Func<int> height, Func<int> weight) =>
+         () => weight() / height() ^ 2;
+
+      private static Func<int> AssessBmi(Func<double> bmi) =>
+         () => {
+            var value = bmi();
+            if (value < 18.5)
+               return -1;
+            if (value >= 25)
+               return 1;
+            else
+               return 0;
+         };
+
+      private static Action ShowBmiResult(Func<int> bmiAssessment) => () =>
+      {
+         var value = bmiAssessment();
+         if (value < 0)
+         {
+            Console.WriteLine("Underweight");
+            return;
+         }
+         else if (value > 1)
+         {
+            Console.WriteLine("Overweight");
+            return;
+         }
+         else
+         {
+            Console.WriteLine("Healthy weight");
+            return;
+         }
+      };
+
+      [Test]
+      public static void TestBmi()
+      {
+         ShowBmiResult(AssessBmi(CalcBmi(() => 1, ()=>222)))();
+      }
    }
 }
