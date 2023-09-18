@@ -33,12 +33,57 @@ namespace Exercises.Chapter2
          QuickSortInPlace(input, start, pivot-1);
          QuickSortInPlace(input, pivot+1, end);
       }
+      
+      static void QuickSortInPlace<T>(List<T> input, Comparison<T> comparer, int start, int end)
+      {
+         if (end <= start)
+            return;
 
+         var pivot = PartitionInPlace<T>(input, comparer, start, end);
+         QuickSortInPlace<T>(input, comparer, start, pivot-1);
+         QuickSortInPlace<T>(input, comparer, pivot+1, end);
+      }
+      
       static List<int> QuickSortOutOfPlace(List<int> array)
       {
          List<int> newList = array.Select(x => x).ToList();  
          QuickSortInPlace(newList, 0, array.Count - 1);
          return newList;
+      }
+      
+      static List<T> QuickSortOutOfPlace<T>(List<T> array, Comparison<T> comparison)
+      {
+         List<T> newList = array.Select(x => x).ToList();  
+         QuickSortInPlace(newList, comparison, 0, array.Count - 1);
+         return newList;
+      }      
+      
+      
+      static int PartitionInPlace<T>(List<T> array, Comparison<T> comparer, int start, int end)
+      {
+         partitionCalls++;
+         T tmp;
+         T pivot = array[end]; // always value of last element
+         int i = start - 1; // starts one place behind first element
+         
+         // move values less than the pivot to the left
+         for (int j = start; j <= end -1; j++)
+         {
+            if (comparer(array[j], pivot) < 0)
+            {
+               i++;
+               tmp = array[i];
+               array[i] = array[j];
+               array[j] = tmp;
+            }
+         }
+         // and finally move the pivot to the next spot in the array;
+         i++;
+         tmp = array[i];
+         array[i] = array[end];
+         array[end] = tmp;
+
+         return i; // i is the location of the pivot
       }
       
       static int PartitionInPlace(List<int> array, int start, int end)
@@ -91,15 +136,35 @@ namespace Exercises.Chapter2
          Assert.AreNotSame(input, result);
          CollectionAssert.IsOrdered(result);
       }
+
+      
       
       // 3. Generalize your implementation to take a `List<T>`, and additionally a 
       // `Comparison<T>` delegate.
+      [Test]
+      public static void QuickSortOutOfPlaceTest2()
+      {
+         List<int> input = new() { 3, 1, 8, 2, 5, 6, 10, 7, 4, 9 };
+         var result = QuickSortOutOfPlace(input, new Comparison<int>((x,y) => x.CompareTo(y)));
+         
+         CollectionAssert.AreEqual(new List<int>{1,2,3,4,5,6,7,8,9,10}, result);
+         Assert.AreNotSame(input, result);
+         CollectionAssert.IsOrdered(result);
+      }
+
 
       // 4. In this chapter, you've seen a `Using` function that takes an `IDisposable`
       // and a function of type `Func<TDisp, R>`. Write an overload of `Using` that
-      // takes a `Func<IDisposable>` as first
+      // takeßs a `Func<IDisposable>` as first
       // parameter, instead of the `IDisposable`. (This can be used to fix warnings
       // given by some code analysis tools about instantiating an `IDisposable` and
       // not disposing it.)
+      static R Using<R>(Func<IDisposable> disposableFactory, Func<IDisposable, R> doSomething)
+      {
+         using (disposableFactory())
+         {
+            return doSomething(disposableFactory());
+         }
+      }
    }
 }
